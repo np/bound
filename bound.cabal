@@ -63,6 +63,7 @@ library
     Bound.Scope.Simple
     Bound.Term
     Bound.Var
+    Bound.Var.Injections
 
   build-depends:
     base            >= 4       && < 5,
@@ -75,7 +76,8 @@ library
     hashable-extras >= 0.1     && < 1,
     prelude-extras  >= 0.3     && < 1,
     profunctors     >= 3.3     && < 5,
-    transformers    >= 0.2     && < 0.4
+    transformers    >= 0.2     && < 0.4,
+    void            >= 0.6     && < 1
 
   ghc-options: -Wall -O2 -fspec-constr -fdicts-cheap -funbox-strict-fields
 
