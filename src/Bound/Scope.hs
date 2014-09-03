@@ -40,6 +40,11 @@ module Bound.Scope
   -- * Traditional de Bruijn
   , fromScope
   , toScope
+  -- * Polymorphic views for names and binders
+  , Binder
+  , pack1
+  , unpack1
+  , abs1
   -- * Bound variable manipulation
   , splat
   , bindings
@@ -273,6 +278,37 @@ fromScope (Scope s) = s >>= \v -> case v of
 toScope :: Monad f => f (Var b a) -> Scope b f a
 toScope e = Scope (liftM (fmap return) e)
 {-# INLINE toScope #-}
+
+-------------------------------------------------------------------------------
+-- Polymorphic views for names and binders
+-------------------------------------------------------------------------------
+
+-- TODO: this class has to be somewhere else
+-- some methods could be added to it provided they
+-- don't leak b ~ ()
+class Binder b where
+
+-- This is supposed to be the only instance.
+-- You are not supposed to get b ~ () from Binder b.
+instance Binder ()
+
+-- | Abstract over a single "polymorphically typed" variable.
+-- The given function implements the body of the scope and is
+-- a "statically fresh" name.
+abs1 :: Monad f => (forall b. Binder b => b -> f (Var b a)) -> Scope () f a
+abs1 k = toScope (k ())
+{-# INLINE abs1 #-}
+
+-- | Abstract over a single "polymorphically typed" variable
+pack1 :: (Monad f, Binder b) => b -> f (Var b a) -> Scope () f a
+pack1 _x = Scope . liftM (fmap return . first (const ()))
+{-# INLINE pack1 #-}
+
+-- | Unpack a given scope by supplying a continuation which receives
+-- a "statically fresh" name and the corresponding body.
+unpack1 :: Monad f => Scope () f a -> (forall b. Binder b => b -> f (Var b a) -> r) -> r
+unpack1 e k = k () (fromScope e)
+{-# INLINE unpack1 #-}
 
 -------------------------------------------------------------------------------
 -- Exotic Traversals of Bound Variables (not exported by default)
